@@ -210,7 +210,8 @@ Task("Build-CI")
     .IsDependentOn("Version")
     .IsDependentOn("Package-Zip")
     .IsDependentOn("Set-Build-Number")
-    .IsDependentOn("Publish-Build-Artificat");
+    .IsDependentOn("Publish-Build-Artificat")
+    .IsDependentOn("Publish-Test-Results");
 
 
 RunTarget(task);
