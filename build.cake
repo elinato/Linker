@@ -29,12 +29,13 @@ Task("Test")
     .Does(() =>
 {
     DotNetCoreTest(
+        Paths.TestProjectFile.FullPath,
         new DotNetCoreTestSettings
         {
             Logger = "trx", //VSTest test results
             ResultsDirectory = Paths.TestResultsDirectory
-        },
-        Paths.TestProjectFile.FullPath);
+        });
+        
 });
 
 Task("Version")
@@ -162,10 +163,10 @@ Task("Set-Build-NUmber")
     .WithCriteria(() => BuildSystem.IsRunningOnTeamCity)
     .Does<PackageMetadata>(package =>
 {
-    var buildNumber = TFBuild.Environment.Build.Number;
-    TFBuild.Commands.UpdateBuildNumber($"{package.Version}+{buildNumber}");
+    // var buildNumber = TFBuild.Environment.Build.Number;
+    // TFBuild.Commands.UpdateBuildNumber($"{package.Version}+{buildNumber}");
 
-    buildNumber = TeamCity.Environment.Build.Number;
+    var buildNumber = TeamCity.Environment.Build.Number;
     TeamCity.SetBuildNumber($"{package.Version}+{buildNumber}");
     
 });
@@ -175,9 +176,9 @@ Task("Publish-Build-Artificat")
     .IsDependentOn("Package-Zip")
     .Does<PackageMetadata>(package =>
 {
-    TFBuild.Commands.UploadArtifactDirectory(package.outputDirectory);
+    //TFBuild.Commands.UploadArtifactDirectory(package.outputDirectory);
     TeamCity.PublishArtifacts(package.FullPath);
-    foreach (var p in GetFiles(package.outputDirectory + $"/*.{package.Extension}"))
+    foreach (var p in GetFiles(package.OutputDirectory + $"/*.{package.Extension}"))
     {
         TeamCity.PublishArtifacts(p.FullPath);
     }
@@ -188,13 +189,13 @@ Task("Publish-Test-Results")
     .IsDependentOn("Test")
     .Does(() =>
 {
-    TFBuild.Commands.PublishTestResults(
-        new TFBuildPublishTestResultsData
-        {
-            TestRunner = TFTestRunnerType.VSTest,
-            TestResultsFiles = GetFiles(Paths.TestResultsDirectory + "/*.trx").ToList()
-        }
-    );
+    // TFBuild.Commands.PublishTestResults(
+    //     new TFBuildPublishTestResultsData
+    //     {
+    //         TestRunner = TFTestRunnerType.VSTest,
+    //         TestResultsFiles = GetFiles(Paths.TestResultsDirectory + "/*.trx").ToList()
+    //     }
+    // );
 
     foreach (var testResult in GetFiles(Paths.TestResultsDirectory + "/*.trx"))
     {
