@@ -1,4 +1,4 @@
-#addin nuget:?package=Cake.Git&version=0.19.0
+//#addin nuget:?package=Cake.Git&version=0.19.0
 
 #load paths.cake
 
@@ -8,10 +8,15 @@ public static string ReadVersionFromProjectFile(ICakeContext context)
 {
     var versionNode = "/Project/PropertyGroup/Version/text()";
 
-    // TODO: return the content of the version node in the project file
-    return null;
+    var version = context.XmlPeek(
+        Paths.WebProjectFile, 
+        versionNode,
+        new XmlPeekSettings{
+            SuppressWarning = true
+        });
+    return version;
 }
-
+/* 
 public static bool LatestCommitHasVersionTag(this ICakeContext context)
 {
     var latestTag = context.GitDescribe(Paths.RepoDirectory);
@@ -20,3 +25,4 @@ public static bool LatestCommitHasVersionTag(this ICakeContext context)
 
     return isVersionTag && noCommitsAfterLatestTag;
 }
+*/
