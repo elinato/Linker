@@ -14,7 +14,7 @@ var task = Argument("Task", "Build");
 Setup<PackageMetadata>(contect => {
     return new PackageMetadata(
         outputDirectory: Argument("packageOutputDirectory", "packages"),
-        name: "Linker-2.1"
+        name: "Linker-2"
     );
 });
 
