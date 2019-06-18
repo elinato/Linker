@@ -28,7 +28,13 @@ Task("Test")
     .IsDependentOn("Compile")
     .Does(() =>
 {
-    DotNetCoreTest(Paths.TestProjectFile.FullPath);
+    DotNetCoreTest(
+        new DotNetCoreTestSettings
+        {
+            Logger = "trx", //VSTest test results
+            ResultsDirectory = Paths.TestResultsDirectory
+        },
+        Paths.TestProjectFile.FullPath);
 });
 
 Task("Version")
@@ -152,5 +158,54 @@ Task("Deploy-Octopus")
         }
     );
 });
+Task("Set-Build-NUmber")
+    .WithCriteria(() => BuildSystem.IsRunningOnTeamCity)
+    .Does<PackageMetadata>(package =>
+{
+    var buildNumber = TFBuild.Environment.Build.Number;
+    TFBuild.Commands.UpdateBuildNumber($"{package.Version}+{buildNumber}");
+
+    buildNumber = TeamCity.Environment.Build.Number;
+    TeamCity.SetBuildNumber($"{package.Version}+{buildNumber}");
+    
+});
+
+Task("Publish-Build-Artificat")
+    .WithCriteria(() => BuildSystem.IsRunningOnTeamCity)
+    .IsDependentOn("Package-Zip")
+    .Does<PackageMetadata>(package =>
+{
+    TFBuild.Commands.UploadArtifactDirectory(package.outputDirectory);
+    TeamCity.PublishArtifacts(package.FullPath);
+    foreach (var p in GetFiles(package.outputDirectory + $"/*.{package.Extension}"))
+    {
+        TeamCity.PublishArtifacts(p.FullPath);
+    }
+});
+
+Task("Publish-Test-Results")
+    .WithCriteria(()=> BuildSystem.IsRunningOnTeamCity)
+    .IsDependentOn("Test")
+    .Does(() =>
+{
+    TFBuild.Commands.PublishTestResults(
+        new TFBuildPublishTestResultsData
+        {
+            TestRunner = TFTestRunnerType.VSTest,
+            TestResultsFiles = GetFiles(Paths.TestResultsDirectory + "/*.trx").ToList()
+        }
+    );
+});
+
+Task("Build-CI")
+    .IsDependentOn("Compile")
+    .IsDependentOn("Test")
+    .IsDependentOn("Build-Frontend")
+    .IsDependentOn("Version")
+    .IsDependentOn("Package-Zip")
+    .IsDependentOn("Set-Build-Number")
+    .IsDependentOn("Publish-Build-Artificat");
+
 
 RunTarget(task);
+
