@@ -195,6 +195,11 @@ Task("Publish-Test-Results")
             TestResultsFiles = GetFiles(Paths.TestResultsDirectory + "/*.trx").ToList()
         }
     );
+
+    foreach (var testResult in GetFiles(Paths.TestResultsDirectory + "/*.trx"))
+    {
+        TeamCity.ImportData("vstest", testResult);
+    }
 });
 
 Task("Build-CI")
